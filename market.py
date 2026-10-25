@@ -11,6 +11,27 @@ logger = logging.getLogger(__file__)
 
 
 def get_product_list(page, campaign_id, access_token):
+    """Получает страницу списка товаров продавца из Яндекс Маркета.
+
+    Args:
+        page (str): Токен страницы для постраничной загрузки товаров.
+        campaign_id (str): Идентификатор магазина на Яндекс Маркете.
+        access_token (str): Токен авторизации для доступа к API.
+
+    Returns:
+        dict: Данные о товарах и информация о следующей странице.
+
+    Examples:
+        Корректный вызов с действующими учётными данными:
+        >>> products = get_product_list("", "12345", "valid_token")
+
+        Некорректный вызов без обязательных аргументов:
+        >>> get_product_list()
+        Traceback (most recent call last):
+            ...
+        TypeError: get_product_list() missing 3 required positional arguments: 'page', 'campaign_id', and 'access_token'
+    """
+
     endpoint_url = "https://api.partner.market.yandex.ru/"
     headers = {
         "Content-Type": "application/json",
@@ -30,6 +51,33 @@ def get_product_list(page, campaign_id, access_token):
 
 
 def update_stocks(stocks, campaign_id, access_token):
+    """Обновляет остатки товаров на складе Яндекс Маркета.
+
+    Args:
+        stocks (list[dict]): Список товаров с артикулами,
+            идентификаторами складов и количеством.
+        campaign_id (str): Идентификатор магазина на Яндекс Маркете.
+        access_token (str): Токен авторизации для доступа к API.
+
+    Returns:
+        dict: Ответ сервера с результатом обработки запроса.
+
+    Examples:
+        Корректный вызов с действующими учётными данными:
+        >>> stocks = [{
+        ...     "sku": "12345",
+        ...     "warehouseId": 100,
+        ...     "items": [{"count": 10, "type": "FIT"}]
+        ... }]
+        >>> result = update_stocks(stocks, "12345", "valid_token")
+
+        Некорректный вызов без обязательных аргументов:
+        >>> update_stocks()
+        Traceback (most recent call last):
+            ...
+        TypeError: update_stocks() missing 3 required positional arguments: 'stocks', 'campaign_id', and 'access_token'
+    """
+
     endpoint_url = "https://api.partner.market.yandex.ru/"
     headers = {
         "Content-Type": "application/json",
@@ -46,6 +94,34 @@ def update_stocks(stocks, campaign_id, access_token):
 
 
 def update_price(prices, campaign_id, access_token):
+    """Отправляет обновлённые цены товаров в Яндекс Маркет.
+
+    Args:
+        prices (list[dict]): Список товаров с артикулами,
+            ценами и валютой.
+        campaign_id (str): Идентификатор магазина на Яндекс Маркете.
+        access_token (str): Токен авторизации для доступа к API.
+
+    Returns:
+        dict: Ответ сервера с результатом обработки запроса.
+
+    Examples:
+        Корректный вызов с действующими учётными данными:
+        >>> prices = [{
+        ...     "id": "12345",
+        ...     "price": {
+        ...         "value": 5990,
+        ...         "currencyId": "RUR"
+        ...     }
+        ... }]
+        >>> result = update_price(prices, "12345", "valid_token")
+
+        Некорректный вызов без обязательных аргументов:
+        >>> update_price()
+        Traceback (most recent call last):
+            ...
+        TypeError: update_price() missing 3 required positional arguments: 'prices', 'campaign_id', and 'access_token'
+    """
     endpoint_url = "https://api.partner.market.yandex.ru/"
     headers = {
         "Content-Type": "application/json",
@@ -62,7 +138,27 @@ def update_price(prices, campaign_id, access_token):
 
 
 def get_offer_ids(campaign_id, market_token):
-    """Получить артикулы товаров Яндекс маркета"""
+    """Получает артикулы всех товаров продавца на Яндекс Маркете.
+
+    Args:
+        campaign_id (str): Идентификатор магазина на Яндекс Маркете.
+        market_token (str): Токен авторизации для доступа к API.
+
+    Returns:
+        list[str]: Список артикулов товаров продавца.
+
+    Examples:
+        Корректный вызов с действующими учётными данными:
+        >>> offer_ids = get_offer_ids("12345", "valid_token")
+        >>> isinstance(offer_ids, list)
+        True
+
+        Некорректный вызов без обязательных аргументов:
+        >>> get_offer_ids()
+        Traceback (most recent call last):
+            ...
+        TypeError: get_offer_ids() missing 2 required positional arguments: 'campaign_id' and 'market_token'
+    """
     page = ""
     product_list = []
     while True:
@@ -78,6 +174,30 @@ def get_offer_ids(campaign_id, market_token):
 
 
 def create_stocks(watch_remnants, offer_ids, warehouse_id):
+    """Формирует список остатков товаров для Яндекс Маркета.
+
+    Args:
+        watch_remnants (list[dict]): Данные о часах из Excel-файла.
+        offer_ids (list[str]): Список артикулов товаров магазина.
+        warehouse_id (str): Идентификатор склада на Яндекс Маркете.
+
+    Returns:
+        list[dict]: Список товаров с артикулами, идентификаторами
+            складов, количеством и временем обновления остатков.
+
+    Examples:
+        Корректный вызов:
+        >>> watches = [{"Код": "123", "Количество": 5}]
+        >>> stocks = create_stocks(watches, ["123"], "100")
+        >>> stocks[0]["items"][0]["count"]
+        5
+
+        Некорректный вызов:
+        >>> create_stocks(None, ["123"], "100")
+        Traceback (most recent call last):
+            ...
+        TypeError: 'NoneType' object is not iterable
+    """
     # Уберем то, что не загружено в market
     stocks = list()
     date = str(datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z")
@@ -123,6 +243,28 @@ def create_stocks(watch_remnants, offer_ids, warehouse_id):
 
 
 def create_prices(watch_remnants, offer_ids):
+    """Формирует список цен товаров для Яндекс Маркета.
+
+    Args:
+        watch_remnants (list[dict]): Данные о часах из Excel-файла.
+        offer_ids (list[str]): Список артикулов товаров магазина.
+
+    Returns:
+        list[dict]: Список товаров с артикулами, ценами и валютой.
+
+    Examples:
+        Корректный вызов:
+        >>> watches = [{"Код": "123", "Цена": "5'990.00 руб."}]
+        >>> create_prices(watches, ["123"])
+        [{'id': '123', 'price': {'value': 5990, 'currencyId': 'RUR'}}]
+
+        Некорректный вызов:
+        >>> create_prices(None, ["123"])
+        Traceback (most recent call last):
+            ...
+        TypeError: 'NoneType' object is not iterable
+    """
+
     prices = []
     for watch in watch_remnants:
         if str(watch.get("Код")) in offer_ids:
@@ -143,6 +285,30 @@ def create_prices(watch_remnants, offer_ids):
 
 
 async def upload_prices(watch_remnants, campaign_id, market_token):
+    """Подготавливает и отправляет обновлённые цены в Яндекс Маркет.
+
+    Args:
+        watch_remnants (list[dict]): Данные о часах из Excel-файла.
+        campaign_id (str): Идентификатор магазина на Яндекс Маркете.
+        market_token (str): Токен авторизации для доступа к API.
+
+    Returns:
+        list[dict]: Список товаров с подготовленными ценами.
+
+    Examples:
+        Корректный вызов с действующими учётными данными:
+        >>> import asyncio
+        >>> watches = [{"Код": "123", "Цена": "5'990.00 руб."}]
+        >>> prices = asyncio.run(
+        ...     upload_prices(watches, "12345", "valid_token")
+        ... )
+
+        Некорректный вызов без обязательных аргументов:
+        >>> asyncio.run(upload_prices())
+        Traceback (most recent call last):
+            ...
+        TypeError: upload_prices() missing 3 required positional arguments: 'watch_remnants', 'campaign_id', and 'market_token'
+    """
     offer_ids = get_offer_ids(campaign_id, market_token)
     prices = create_prices(watch_remnants, offer_ids)
     for some_prices in list(divide(prices, 500)):
@@ -151,6 +317,33 @@ async def upload_prices(watch_remnants, campaign_id, market_token):
 
 
 async def upload_stocks(watch_remnants, campaign_id, market_token, warehouse_id):
+    """Подготавливает и отправляет актуальные остатки в Яндекс Маркет.
+
+    Args:
+        watch_remnants (list[dict]): Данные о часах из Excel-файла.
+        campaign_id (str): Идентификатор магазина на Яндекс Маркете.
+        market_token (str): Токен авторизации для доступа к API.
+        warehouse_id (str): Идентификатор склада на Яндекс Маркете.
+
+    Returns:
+        tuple[list[dict], list[dict]]: Два списка остатков.
+            Первый содержит товары с ненулевыми остатками.
+            Второй содержит все товары, включая отсутствующие.
+
+    Examples:
+        Корректный вызов с действующими учётными данными:
+        >>> import asyncio
+        >>> watches = [{"Код": "123", "Количество": 5}]
+        >>> result = asyncio.run(
+        ...     upload_stocks(watches, "12345", "valid_token", "100")
+        ... )
+
+        Некорректный вызов без обязательных аргументов:
+        >>> asyncio.run(upload_stocks())
+        Traceback (most recent call last):
+            ...
+        TypeError: upload_stocks() missing 4 required positional arguments: 'watch_remnants', 'campaign_id', 'market_token', and 'warehouse_id'
+    """
     offer_ids = get_offer_ids(campaign_id, market_token)
     stocks = create_stocks(watch_remnants, offer_ids, warehouse_id)
     for some_stock in list(divide(stocks, 2000)):
@@ -162,6 +355,24 @@ async def upload_stocks(watch_remnants, campaign_id, market_token, warehouse_id)
 
 
 def main():
+    """Обновляет цены и остатки часов на Яндекс Маркете для FBS и DBS.
+
+    Загружает данные поставщика, обновляет остатки и цены
+    товаров для обеих схем работы и обрабатывает ошибки соединения.
+
+    Returns:
+        None: Функция ничего не возвращает.
+
+    Examples:
+        Корректный вызов при наличии настроек и доступа к API:
+        >>> main()
+
+        Некорректный вызов при отсутствии переменных окружения:
+        >>> main()
+        Traceback (most recent call last):
+            ...
+        environs.EnvError: ...
+    """
     env = Env()
     market_token = env.str("MARKET_TOKEN")
     campaign_fbs_id = env.str("FBS_ID")
