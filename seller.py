@@ -131,7 +131,25 @@ def create_prices(watch_remnants, offer_ids):
 
 
 def price_conversion(price: str) -> str:
-    """Преобразовать цену. Пример: 5'990.00 руб. -> 5990"""
+    """Преобразует цену товара в строку из цифр без дробной части.
+
+    Args:
+        price (str): Цена товара в строковом формате.
+
+    Returns:
+        str: Цена без дробной части и нечисловых символов.
+
+    Examples:
+        Корректный вызов:
+        >>> price_conversion("5'990.00 руб.")
+        '5990'
+
+        Некорректный вызов:
+        >>> price_conversion(5990)
+        Traceback (most recent call last):
+            ...
+        AttributeError: 'int' object has no attribute 'split'
+    """
     return re.sub("[^0-9]", "", price.split(".")[0])
 
 
