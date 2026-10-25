@@ -12,7 +12,24 @@ logger = logging.getLogger(__file__)
 
 
 def get_product_list(last_id, client_id, seller_token):
-    """Получить список товаров магазина озон"""
+    """Получает страницу списка товаров магазина Ozon.
+
+    Args:
+        last_id (str): Идентификатор для получения следующей страницы товаров.
+        client_id (str): Идентификатор продавца в Ozon.
+        seller_token (str): API-ключ продавца.
+
+    Returns:
+        dict: Данные страницы товаров, полученные от Ozon.
+
+    Examples:
+        Корректный вызов:
+        >>> products = get_product_list("", "12345", "valid_api_key")
+
+        Некорректный вызов:
+        >>> get_product_list("", "12345", "invalid_api_key")
+        # Ozon отклонит запрос с недействительным API-ключом.
+    """
     url = "https://api-seller.ozon.ru/v2/product/list"
     headers = {
         "Client-Id": client_id,
@@ -32,7 +49,26 @@ def get_product_list(last_id, client_id, seller_token):
 
 
 def get_offer_ids(client_id, seller_token):
-    """Получить артикулы товаров магазина озон"""
+    """Получает список артикулов всех товаров продавца на Ozon.
+
+    Args:
+        client_id (str): Идентификатор продавца в Ozon.
+        seller_token (str): API-ключ продавца.
+
+    Returns:
+        list[str]: Список артикулов товаров.
+
+    Examples:
+        Корректный результат вызова с действующими данными:
+        >>> get_offer_ids("12345", "valid_api_key")
+        ['10001', '10002', '10003']
+
+        Некорректный вызов:
+        >>> get_offer_ids()
+        Traceback (most recent call last):
+            ...
+        TypeError: get_offer_ids() missing 2 required positional arguments: 'client_id' and 'seller_token'
+    """
     last_id = ""
     product_list = []
     while True:
@@ -49,7 +85,33 @@ def get_offer_ids(client_id, seller_token):
 
 
 def update_price(prices: list, client_id, seller_token):
-    """Обновить цены товаров"""
+    """Отправляет обновлённые цены товаров в Ozon.
+
+    Args:
+        prices (list): Список товаров с новыми ценами.
+        client_id (str): Идентификатор продавца в Ozon.
+        seller_token (str): API-ключ продавца.
+
+    Returns:
+        dict: Ответ Ozon с результатами обработки запроса.
+
+    Examples:
+        Корректный вызов с действующими учётными данными:
+        >>> prices = [{
+        ...     "offer_id": "12345",
+        ...     "price": "5990",
+        ...     "old_price": "0",
+        ...     "currency_code": "RUB",
+        ...     "auto_action_enabled": "UNKNOWN"
+        ... }]
+        >>> result = update_price(prices, "12345", "valid_api_key")
+
+        Некорректный вызов:
+        >>> update_price()
+        Traceback (most recent call last):
+            ...
+        TypeError: update_price() missing 3 required positional arguments: 'prices', 'client_id', and 'seller_token'
+    """
     url = "https://api-seller.ozon.ru/v1/product/import/prices"
     headers = {
         "Client-Id": client_id,
@@ -62,7 +124,27 @@ def update_price(prices: list, client_id, seller_token):
 
 
 def update_stocks(stocks: list, client_id, seller_token):
-    """Обновить остатки"""
+    """Обновляет остатки товаров на складе Ozon.
+
+    Args:
+        stocks (list[dict]): Список товаров с артикулами и остатками.
+        client_id (str): Идентификатор продавца в Ozon.
+        seller_token (str): API-ключ продавца.
+
+    Returns:
+        dict: Ответ Ozon с результатом обработки обновления остатков.
+
+    Examples:
+        Корректный вызов с действующими учётными данными:
+        >>> stocks = [{"offer_id": "12345", "stock": 10}]
+        >>> result = update_stocks(stocks, "12345", "valid_api_key")
+
+        Некорректный вызов:
+        >>> update_stocks()
+        Traceback (most recent call last):
+            ...
+        TypeError: update_stocks() missing 3 required positional arguments: 'stocks', 'client_id', and 'seller_token'
+    """
     url = "https://api-seller.ozon.ru/v1/product/import/stocks"
     headers = {
         "Client-Id": client_id,
@@ -75,7 +157,23 @@ def update_stocks(stocks: list, client_id, seller_token):
 
 
 def download_stock():
-    """Скачать файл ostatki с сайта casio"""
+    """Скачивает и обрабатывает файл с остатками часов с сайта Timeworld.
+
+    Returns:
+        list[dict]: Список товаров с артикулами, ценами и остатками.
+
+    Examples:
+        Корректный вызов при доступности файла:
+        >>> stocks = download_stock()
+        >>> isinstance(stocks, list)
+        True
+
+        Некорректное выполнение при недоступности сервера:
+        >>> download_stock()
+        Traceback (most recent call last):
+            ...
+        requests.exceptions.ConnectionError: ...
+    """
     # Скачать остатки с сайта
     casio_url = "https://timeworld.ru/upload/files/ostatki.zip"
     session = requests.Session()
@@ -96,7 +194,28 @@ def download_stock():
 
 
 def create_stocks(watch_remnants, offer_ids):
-    # Уберем то, что не загружено в seller
+    """Формирует список остатков товаров для обновления на Ozon.
+
+    Args:
+        watch_remnants (list[dict]): Данные о часах из Excel-файла.
+        offer_ids (list[str]): Список артикулов товаров на Ozon.
+
+    Returns:
+        list[dict]: Список артикулов и доступного количества товаров.
+
+    Examples:
+        Корректный вызов:
+        >>> watches = [{"Код": "123", "Количество": 5}]
+        >>> create_stocks(watches, ["123", "456"])
+        [{'offer_id': '123', 'stock': 5},
+         {'offer_id': '456', 'stock': 0}]
+
+        Некорректный вызов:
+        >>> create_stocks(None, ["123"])
+        Traceback (most recent call last):
+            ...
+        TypeError: 'NoneType' object is not iterable
+    """
     stocks = []
     for watch in watch_remnants:
         if str(watch.get("Код")) in offer_ids:
@@ -116,6 +235,31 @@ def create_stocks(watch_remnants, offer_ids):
 
 
 def create_prices(watch_remnants, offer_ids):
+    """Формирует список цен товаров для обновления на Ozon.
+
+    Args:
+        watch_remnants (list[dict]): Данные о часах из Excel-файла.
+        offer_ids (list[str]): Список артикулов товаров на Ozon.
+
+    Returns:
+        list[dict]: Список товаров с артикулами, ценами и валютой.
+
+    Examples:
+        Корректный вызов:
+        >>> watches = [{"Код": "123", "Цена": "5'990.00 руб."}]
+        >>> create_prices(watches, ["123"])
+        [{'auto_action_enabled': 'UNKNOWN',
+          'currency_code': 'RUB',
+          'offer_id': '123',
+          'old_price': '0',
+          'price': '5990'}]
+
+        Некорректный вызов:
+        >>> create_prices(None, ["123"])
+        Traceback (most recent call last):
+            ...
+        TypeError: 'NoneType' object is not iterable
+    """
     prices = []
     for watch in watch_remnants:
         if str(watch.get("Код")) in offer_ids:
@@ -154,12 +298,56 @@ def price_conversion(price: str) -> str:
 
 
 def divide(lst: list, n: int):
-    """Разделить список lst на части по n элементов"""
+    """Разбивает список на части заданного размера.
+
+    Args:
+        lst (list): Исходный список элементов.
+        n (int): Максимальное количество элементов в одной части.
+
+    Yields:
+        list: Очередная часть исходного списка.
+
+    Examples:
+        Корректный вызов:
+        >>> list(divide([1, 2, 3, 4, 5], 2))
+        [[1, 2], [3, 4], [5]]
+
+        Некорректный вызов:
+        >>> list(divide([1, 2, 3], 0))
+        Traceback (most recent call last):
+            ...
+        ValueError: range() arg 3 must not be zero
+    """
     for i in range(0, len(lst), n):
         yield lst[i : i + n]
 
 
 async def upload_prices(watch_remnants, client_id, seller_token):
+    """Подготавливает и отправляет обновлённые цены товаров в Ozon.
+
+    Args:
+        watch_remnants (list[dict]): Данные о часах из Excel-файла.
+        client_id (str): Идентификатор продавца в Ozon.
+        seller_token (str): API-ключ продавца.
+
+    Returns:
+        list[dict]: Список товаров с подготовленными ценами.
+
+    Examples:
+        Корректный вызов с действующими учётными данными:
+        >>> import asyncio
+        >>> watches = [{"Код": "123", "Цена": "5'990.00 руб."}]
+        >>> prices = asyncio.run(
+        ...     upload_prices(watches, "12345", "valid_api_key")
+        ... )
+
+        Некорректный вызов:
+        >>> import asyncio
+        >>> asyncio.run(upload_prices())
+        Traceback (most recent call last):
+            ...
+        TypeError: upload_prices() missing 3 required positional arguments: 'watch_remnants', 'client_id', and 'seller_token'
+    """
     offer_ids = get_offer_ids(client_id, seller_token)
     prices = create_prices(watch_remnants, offer_ids)
     for some_price in list(divide(prices, 1000)):
@@ -168,6 +356,32 @@ async def upload_prices(watch_remnants, client_id, seller_token):
 
 
 async def upload_stocks(watch_remnants, client_id, seller_token):
+    """Подготавливает и отправляет актуальные остатки товаров в Ozon.
+
+    Args:
+        watch_remnants (list[dict]): Данные о часах из Excel-файла.
+        client_id (str): Идентификатор продавца в Ozon.
+        seller_token (str): API-ключ продавца.
+
+    Returns:
+        tuple[list[dict], list[dict]]: Два списка остатков.
+            Первый содержит только товары с ненулевыми остатками.
+            Второй содержит все товары, включая отсутствующие.
+
+    Examples:
+        Корректный вызов с действующими учётными данными:
+        >>> import asyncio
+        >>> watches = [{"Код": "123", "Количество": 5}]
+        >>> result = asyncio.run(
+        ...     upload_stocks(watches, "12345", "valid_api_key")
+        ... )
+
+        Некорректный вызов:
+        >>> asyncio.run(upload_stocks())
+        Traceback (most recent call last):
+            ...
+        TypeError: upload_stocks() missing 3 required positional arguments: 'watch_remnants', 'client_id', and 'seller_token'
+    """
     offer_ids = get_offer_ids(client_id, seller_token)
     stocks = create_stocks(watch_remnants, offer_ids)
     for some_stock in list(divide(stocks, 100)):
@@ -177,6 +391,24 @@ async def upload_stocks(watch_remnants, client_id, seller_token):
 
 
 def main():
+    """Запускает обновление цен и остатков товаров на Ozon.
+
+    Загружает актуальные данные о часах и передаёт их
+    на маркетплейс. Обрабатывает ошибки соединения.
+
+    Returns:
+        None: Функция ничего не возвращает.
+
+    Examples:
+        Корректный вызов при наличии настроек и доступа к Ozon:
+        >>> main()
+
+        Некорректный вызов при отсутствии переменных окружения:
+        >>> main()
+        Traceback (most recent call last):
+            ...
+        environs.EnvError: ...
+    """
     env = Env()
     seller_token = env.str("SELLER_TOKEN")
     client_id = env.str("CLIENT_ID")
